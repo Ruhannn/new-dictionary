@@ -49,6 +49,8 @@ export default function App() {
       {/* history modal */}
       <AnimatePresence mode="wait">
         {isOpen && <HistoryModal history={history} />}
+      </AnimatePresence>
+      <AnimatePresence mode="wait">
         {/* main */}
         <Card className="w-full shadow-none rounded-none">
           <CardHeader>

@@ -57,7 +57,7 @@ export default function HistoryModal({ history }: { history: History[] }) {
             </motion.div>
           ))}
       </div>
-      {/* TODO:import and export history */}
+
       <div className=""></div>
     </motion.div>
   );
