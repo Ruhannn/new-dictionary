@@ -16,7 +16,8 @@ type HistoryStore = {
     remove: (history: History) => void,
     clear: () => void,
     importHistory: (history: History[]) => void,
-    exportHistory: () => void
+    exportHistory: () => void,
+    pinned: (id: string) => void,
 }
 
 export const useHistoryStore = create<HistoryStore>()(
@@ -48,6 +49,14 @@ export const useHistoryStore = create<HistoryStore>()(
                 console.log(historyData)
                 navigator.clipboard.writeText(historyData)
             },
+            pinned: (id) => {
+                set((state) => ({
+                    history: state.history.map((item) =>
+                        item.id === id ? { ...item, pinned: !item.pinned } : item
+                    ),
+                }));
+            }
+
         }),
         {
             name: 'history-store',
