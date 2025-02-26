@@ -51,12 +51,12 @@ export default function HistoryModal({ history }: { history: History[] }) {
                 }}
                 className={cn(
                   "p-2 rounded-lg flex justify-between items-center group cursor-pointer relative",
-                  item.pinned ? "bg-yellow-200" : "bg-sidebar-ring"
+                  item.pinned ? "bg-[#92ddff]" : "bg-sidebar-ring"
                 )}>
                 {/* stat bg */}
 
                 {item.pinned && (
-                  <div className="absolute bg-yellow-300 block size-4 top-0 right-0 rounded-tr-lg rounded-bl-lg" />
+                  <div className="absolute bg-[#6dcffc] block size-4 top-0 right-0 rounded-tr-lg rounded-bl-lg" />
                 )}
 
                 <div
