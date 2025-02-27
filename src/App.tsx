@@ -1,113 +1,80 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { History } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import HistoryModal from "./components/HistoryModal";
-import Meaning from "./components/Meaning";
-import { Button } from "./components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
-import { Input } from "./components/ui/input";
-import { useMeaning } from "./service/queries";
-import { useHistoryStore } from "./store/history.store";
+import { useEffect, useRef } from "react";
+import Dictionary from "./Dictionary";
 
 export default function App() {
-  const { register, handleSubmit, setFocus, resetField } = useForm<{
-    value: string;
-  }>();
-  const meaning = useMeaning();
-  const { add, history } = useHistoryStore();
+  const loader = useRef<HTMLDivElement>(null);
+  const path = useRef<SVGPathElement>(null);
+  const initialCurve = 200;
+  const duration = 600;
+  let start: number;
 
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const onSubmit = (data: { value: string }) => {
-    meaning.mutate(data.value, {
-      onSuccess: () => {
-        add({
-          id: crypto.randomUUID(),
-          word: data.value,
-          createdAt: new Date(),
-        });
-      },
-    });
-  };
   useEffect(() => {
-    setFocus("value");
-  }, [setFocus]);
+    setPath(initialCurve);
+    setTimeout(() => {
+      requestAnimationFrame(animate);
+    }, 500);
+  }, []);
 
+  const animate = (timestamp: number) => {
+    if (start === undefined) {
+      start = timestamp;
+    }
+    const elapsed = timestamp - start;
+
+    const newCurve = easeOutQuad(elapsed, initialCurve, -200, duration);
+    setPath(newCurve);
+    if (loader.current) {
+      loader.current.style.top =
+        easeOutQuad(elapsed, 0, -loaderHeight(), duration) + "px";
+    }
+
+    if (elapsed < duration) {
+      requestAnimationFrame(animate);
+    }
+  };
+
+  const easeOutQuad = (
+    time: number,
+    start: number,
+    end: number,
+    duration: number
+  ) => {
+    return -end * (time /= duration) * (time - 2) + start;
+  };
+
+  const loaderHeight = () => {
+    if (!loader.current) return 0;
+    const loaderBounds = loader.current.getBoundingClientRect();
+    return loaderBounds.height;
+  };
+
+  const setPath = (curve: number) => {
+    const width = window.innerWidth;
+    const height = loaderHeight();
+    if (path.current) {
+      path.current.setAttributeNS(
+        null,
+        "d",
+        `M0 0
+  L${width} 0
+  L${width} ${height}
+  Q${width / 2} ${height - curve} 0 ${height}
+  L0 0`
+      );
+    }
+  };
   return (
     <div className="min-h-screen relative">
-      {/* history button */}
-      <div className="absolute top-4 right-4">
-        <Button
-          hidden={history.length === 0}
-          className="cursor-pointer"
-          onClick={() => setIsOpen(!isOpen)}
-          variant="outline">
-          <History />
-        </Button>
+      <div
+        ref={loader}
+        className="h-[calc(134vh-200px)] w-full fixed [&_svg]:size-full [&_svg_path]:stroke-black [&_svg_path]:[stroke-width:1px]">
+        <svg>
+          <path ref={path}></path>
+        </svg>
       </div>
-      {/* history modal */}
-      <AnimatePresence mode="wait">
-        {isOpen && <HistoryModal history={history} />}
-      </AnimatePresence>
-      <AnimatePresence mode="wait">
-        {/* main */}
-        <Card className="w-full shadow-none rounded-none">
-          <CardHeader>
-            <CardTitle className="text-3xl font-bold text-center text-primary">
-              Dictionary
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form
-              onSubmit={handleSubmit(onSubmit)}
-              className="space-y-4">
-              <div className="flex space-x-2">
-                <Input
-                  autoComplete="off"
-                  {...register("value", { required: true })}
-                  placeholder="Enter a word..."
-                  className="flex-grow"
-                />
-                <Button type="submit">Search</Button>
-              </div>
-            </form>
-
-            <>
-              {meaning.data && meaning.data.length > 0 ? (
-                <Meaning data={meaning.data} />
-              ) : (
-                meaning.isError && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    className="mt-8 text-center">
-                    <div className="inline-block p-6 bg-gray-100 text-7xl rounded-full mb-4">
-                      😭
-                    </div>
-                    <h3 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2">
-                      Word Not Found
-                    </h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      Sorry, we couldn't find any definitions for that word.
-                    </p>
-                    <Button
-                      onClick={() => {
-                        resetField("value");
-                        setFocus("value");
-                      }}
-                      variant="outline"
-                      className="mt-2">
-                      Try Another Word
-                    </Button>
-                  </motion.div>
-                )
-              )}
-            </>
-          </CardContent>
-        </Card>
-      </AnimatePresence>
+      <div>
+        <Dictionary />
+      </div>
     </div>
   );
 }
